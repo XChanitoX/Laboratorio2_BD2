@@ -6,34 +6,66 @@
 #include <string>
 #include <cstdio>
 #include <cstring>
-
-using namespace std;
+#include <iostream>
 
 struct Registro{
-    char codigo [40];
+    char codigo [5];
     char nombre [20];
     char carrera [15];
     int ciclo;
 
-    Registro(string codigo_, string nombre_, string carrera_, int ciclo_){
+    void ingresarDatosRegistro() {
+        std::string nombre_, codigo_, carrera_, ciclo_;
+        std::cout << "Agregando un registro..." << std::endl;
+        std::cout << "Ingrese el codigo: \n";
+        std::cin >> codigo_;
         strcpy(codigo,codigo_.c_str());
+        std::cout << "Ingrese el nombre: \n";
+        std::cin >> nombre_;
         strcpy(nombre,nombre_.c_str());
+        std::cout << "Ingrese la carrera: \n";
+        std::cin >> carrera_;
         strcpy(carrera,carrera_.c_str());
-        ciclo = ciclo_;
+        std::cout << "Ingrese el ciclo: \n";
+        std::cin >> ciclo;
     }
+
+    void imprimirDatosRegistro(){
+        std::cout << "Imprimiendo registro: \n";
+        std::cout << "Codigo: " << codigo << "\n";
+        std::cout << "Nombre: " << nombre << "\n";
+        std::cout << "Carrera: " << carrera << "\n";
+        std::cout << "Ciclo: " << ciclo << "\n";
+    }
+
 };
 
 class SequentialFile{
 private:
-    string fileName;
-    vector<Registro> registros;
+    std::string fileName;
+    std::string auxFileName;
+    //std::vector<Registro> registros;
 public:
-    SequentialFile(string fileName_) {
+    SequentialFile(std::string fileName_) {
         fileName = fileName_;
+        auxFileName = "aux.dat";
     }
 
-    void insertAll(vector<Registro> registros){
+    void ordenarRegistros(std::vector<Registro> &registros){
+        for (int i = 0; i < registros.size()-1; i++) {
+            for (int j = 0; j < registros.size()-i-1; j++) {
+                if (registros[j].nombre < registros[i+1].nombre){
+                    Registro aux = Registro();
+                    aux = registros[j];
+                    registros[j] = registros[j+1];
+                    registros[j+1] = aux;
+                }
+            }
+        }
+    }
 
+    void insertAll(std::vector<Registro> registros){
+        std::fstream FileOut;
     }
 /*
     void add(Registro registro){
