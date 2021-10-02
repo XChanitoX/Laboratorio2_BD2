@@ -10,18 +10,22 @@ using namespace std;
 
 struct Registro
 {
-    char codigo [5];
-    char nombre [20];
-    char carrera [15];
+    char codigo [5]{' '};
+    char nombre [20]{' '};
+    char carrera [15]{' '};
     int ciclo;
     int dir=-1;
     char file = 'd';
 
     void setData(){
-        cout<<"Codigo: ";cin>>codigo;
-        cout<<"Nombre: ";cin>>nombre;
-        cout<<"Carrera: ";cin>>carrera;
-        cout<<"Ciclo: ";cin>>ciclo;
+        cout<<"Codigo: ";
+        cin>>codigo;
+        cout<<"Nombre: ";
+        cin>>nombre;
+        cout<<"Carrera: ";
+        cin>>carrera;
+        cout<<"Ciclo: ";
+        cin>>ciclo;
     }
 
     void show() {
@@ -65,69 +69,33 @@ private:
     }
 
     bool isEnd(Registro registro){
-        int num = numRecords(dataFile);
+        int num = numRecords(dataFile)-1;
         return (num == binarySearch(registro));
     }
 
     int numRecords(string file){
         size_t lengthRecord = sizeof(Registro)-2;
-        ofstream outFile;
-        outFile.open(file,ios::app|ios::binary);
-        if(!outFile.is_open()){
+        ifstream inFile;
+        inFile.open(file,ios::app|ios::binary);
+        if(!inFile.is_open()){
             throw new exception(); /// Mejorar throw
         }
-        int numRecords = outFile.tellp()/ lengthRecord; //Obtenemos la cantidad total de registros
-        outFile.close();
+        inFile.seekg(0,ios::end);
+        int byteEnd = inFile.tellg();
+        int numRecords = byteEnd/ lengthRecord; //Obtenemos la cantidad total de registros
+        inFile.close();
         return numRecords;
     }
-
-public:
-    SequentialFile(string file){
-        this->dataFile=file;
-    }
-
-    void add(Registro record){
-
-        int pos = binarySearch(record);
-        size_t lengthRecord = sizeof(Registro)-2;
-
-        Registro registro;
-        ifstream inFile(dataFile, ios::binary | ios::app);
-        if(!inFile.is_open()){
-            throw new exception;
-        }
-        if()
-            inFile.seekg(pos*lengthRecord);
-        inFile.read((char*)&registro.codigo, sizeof(registro.codigo));
-        inFile.read((char*)&registro.carrera, sizeof(registro.nombre));
-        inFile.read((char*)&registro.carrera, sizeof(registro.carrera));
-        string ciclo, dir;
-        inFile.read((char*)&ciclo, sizeof(int));
-        inFile.read((char*)&dir, sizeof(int));
-        registro.ciclo = atoi(ciclo.c_str());
-        record.dir = atoi(dir.c_str());
-        inFile.read((char*)&registro.file, sizeof(char));
-        inFile.close();
-
+    void write(string fileName, Registro record){
         ofstream outFile;
-        bool isEndFileData = isEnd(record);
-        string file;
-        if(isEndFileData){ //Solo si debemos agregar el registro al final
-            file = dataFile;
-        }
-        else{
-            file = auxFileName;
-            record.file = 'a';
-            record.dir = registro.dir;
-        }
+        string ciclo, dir;
 
-        outFile.open(file,ios::app|ios::binary);
+        outFile.open(fileName,ios::app|ios::binary);
 
         if(!outFile.is_open()){
             throw new exception;
         }
-
-
+        outFile.flush();
         int i = 0;
         while (record.codigo[i] != '\0') { outFile << record.codigo[i]; ++i;}
         for (; i < 5; i++) outFile << ' ';
@@ -150,44 +118,107 @@ public:
 
         outFile<<record.file;
         outFile<<'\n';
+        outFile.flush();
         outFile.close();
+    }
 
-        if(isEndFileData)
-            registro.dir = numRecords(file)+1;
-        else
-            registro.dir = numRecords(file);
+    void write(string fileName, int pos, Registro record){
+        ofstream outFile;
+        string ciclo, dir;
+        size_t lengthRecord = sizeof(Registro)-2;
 
-        outFile.open(dataFile,ios::app|ios::binary);
+        outFile.open(fileName,ios::app|ios::binary);
 
         if(!outFile.is_open()){
             throw new exception;
         }
 
+        outFile.flush();
         outFile.seekp(pos*lengthRecord);
-        i = 0;
-        while (registro.codigo[i] != '\0') { outFile << registro.codigo[i]; ++i;}
+        int i = 0;
+        while (record.codigo[i] != '\0') { outFile << record.codigo[i]; ++i;}
         for (; i < 5; i++) outFile << ' ';
         i = 0;
-        while (registro.nombre[i] != '\0') { outFile << registro.nombre[i]; ++i;}
+        while (record.nombre[i] != '\0') { outFile << record.nombre[i]; ++i;}
         for (; i < 20; i++) outFile << ' ' ;
         i = 0;
-        while (registro.carrera[i] != '\0') { outFile << registro.carrera[i]; ++i;}
+        while (record.carrera[i] != '\0') { outFile << record.carrera[i]; ++i;}
         for (; i < 15; i++) outFile << ' ';
 
         i = 0;
-        ciclo = to_string(registro.ciclo);
+        ciclo = to_string(record.ciclo);
         while (ciclo[i] != '\0') { outFile << ciclo[i]; ++i;}
         for (; i < 4; i++) outFile << ' ';
 
         i = 0;
-        dir = to_string(registro.dir);
+        dir = to_string(record.dir);
         while (dir[i] != '\0') { outFile << dir[i]; ++i;}
         for (; i < 4; i++) outFile << " ";
 
-        outFile<<registro.file;
+        outFile<<record.file;
         outFile<<'\n';
+        outFile.flush();
         outFile.close();
+    }
 
+public:
+    SequentialFile(string file){
+        this->dataFile=file;
+    }
+
+    void add(Registro record){
+
+        int pos = binarySearch(record);
+        size_t lengthRecord = sizeof(Registro)-2;
+
+        if(numRecords(dataFile)==0){
+           ofstream outFile(dataFile, ios::app|ios::binary);
+           write(dataFile,record);
+           outFile.close();
+           return;
+        }
+
+        Registro registro;
+        ifstream inFile(dataFile, ios::binary | ios::app);
+        if(!inFile.is_open()){
+            throw new exception;
+        }
+
+        inFile.seekg(pos*lengthRecord);
+        inFile.read((char*)&registro.codigo, sizeof(registro.codigo));
+        inFile.read((char*)&registro.nombre, sizeof(registro.nombre));
+        inFile.read((char*)&registro.carrera, sizeof(registro.carrera));
+        char ciclo[4], dir[4];
+        inFile.read((char*)&ciclo, sizeof(registro.codigo));
+        int byte = inFile.tellg();
+        inFile.seekg(--byte);
+        inFile.read((char*)&dir, sizeof(registro.dir));
+        registro.ciclo = stoi(ciclo);
+        registro.dir = (dir[0] =='-')?(-1):stoi(dir);
+        inFile.read((char*)&registro.file, sizeof(char));
+        inFile.close();
+
+        ofstream outFile;
+        bool isEndFileData = isEnd(record);
+        string fileName;
+        if(isEndFileData){ //Solo si debemos agregar el registro al final
+            fileName = dataFile;
+            record.dir = -1;
+        }
+        else{
+            fileName = auxFileName;
+            record.file = 'a';
+            record.dir = registro.dir;
+        }
+
+        write(fileName, record);
+
+        if(isEndFileData)
+            registro.dir = numRecords(fileName);
+        else
+            registro.dir = numRecords(fileName)-1;
+
+        write(dataFile,pos,registro);
     }
 
     void load(){
@@ -244,7 +275,7 @@ public:
             if(begin>key)
                 return -1;
             else
-                return num;
+                return num-1;
         }
     }
 
